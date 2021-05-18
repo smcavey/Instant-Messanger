@@ -10,6 +10,8 @@
 #define OK 0
 #define SERVER_PORT 5555
 
+char cmdLine[1024]; /* client command line */
+
 int main(int argc, char **argv)
 {
 	int socketfd = 0;
@@ -35,14 +37,17 @@ int main(int argc, char **argv)
 	{
 		printf("connected to server...");
 	}
-/*	do
+	do
 	{
-		list of commands to implement:
+		fgets(cmdLine, sizeof(cmdLine), stdin); /* get user input from keyboard */
+		cmdLine[strcspn(cmdLine, "\n")] = 0; /* strip trailing new line */
+/*		list of commands to implement:
 			see who else is online
 			set your username
 			quit
 			send someone a message
-	}
-	while(strcmp(cmd, '!quit') != 0);
 */
+	}
+	while(strcmp(cmdLine, "!quit") != 0);
+
 }

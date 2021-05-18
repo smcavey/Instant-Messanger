@@ -12,15 +12,19 @@
 #define OK 0
 #define SERVER_PORT 5555 /* server port */
 
+int numUsersConnected = 0;
+
 typedef struct
 {
 	struct sockaddr_in address; /* client address */
 	int connfd; /* connection file descriptor */
 	char *username; /* client username */
+	int userID; /* user ID */
 } client_t;
 
 int main(int argc, char **argv)
 {
+	int userID = 0;
 	int listenfd = 0; /* listening descriptor */
 	int connfd = 0; /* connecton descriptor */
 	struct sockaddr_in server_address; /* server ip */
@@ -52,12 +56,14 @@ int main(int argc, char **argv)
 		socklen_t client_length = sizeof(client_address);
 		connfd = accept(listenfd, (struct sockaddr*)&client_address, &client_length);
 
-
 		/* add client */
 		client_t *client = (client_t *)malloc(sizeof(client_t));
 		client->address = client_address;
 		client->connfd = connfd;
 		client->username = NULL;
+		client->userID = userID++;
+
+		numUsersConnected++;
 	}
 	return 0;
 }
