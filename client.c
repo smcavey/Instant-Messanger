@@ -5,7 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #define ERROR -1
 #define OK 0
@@ -16,10 +18,11 @@ char messageIn[1024]; /* message inbound to client */
 
 int socketfd = 0;
 
-void receiveHelpMessage();
+void *receiveMessages(void *arg);
 
 int main(int argc, char **argv)
 {
+	pthread_t thread_id; /* thread reference id */
 	int connfd = 0;
 	struct sockaddr_in server_address; /* server ip */
 	struct sockaddr_in client_address; /* client ip */
@@ -42,7 +45,7 @@ int main(int argc, char **argv)
 	{
 		printf("connected to server...\n");
 	}
-	receiveHelpMessage();
+	pthread_create(&thread_id, NULL, receiveMessages, (void*)&socketfd);
 	do
 	{
 		fgets(messageOut, sizeof(messageOut), stdin); /* get user input from keyboard */
@@ -51,7 +54,7 @@ int main(int argc, char **argv)
 	}
 	while(strcmp(messageOut, "!quit") != 0);
 }
-void receiveHelpMessage()
+void *receiveMessages(void *arg)
 {
 	read(socketfd, messageIn, sizeof(messageIn));
 	printf("%s", messageIn);

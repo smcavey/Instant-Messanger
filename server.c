@@ -29,7 +29,7 @@ void clientHelpMenu(int connfd); /* provides client with helpful informaiton */
 
 int main(int argc, char **argv)
 {
-	pthread_t thread_id;
+	pthread_t thread_id; /* thread reference id */
 	int userID = 0;
 	int listenfd = 0; /* listening descriptor */
 	int connfd = 0; /* connecton descriptor */
