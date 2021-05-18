@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #define ERROR -1
 #define OK 0
@@ -24,6 +25,7 @@ typedef struct
 } client_t;
 
 void *clientInterface(void *arg); /* handles communication with the client */
+void clientHelpMenu(int connfd); /* provides client with helpful informaiton */
 
 int main(int argc, char **argv)
 {
@@ -76,5 +78,11 @@ int main(int argc, char **argv)
 
 void *clientInterface(void *arg)
 {
-
+	client_t *client = (client_t*)arg;
+	clientHelpMenu(client->connfd);
+}
+void clientHelpMenu(int connfd)
+{
+	char *helpMessage = "!quit to quit\n!help for help\n";
+	write(connfd, helpMessage, strlen(helpMessage));
 }

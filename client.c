@@ -5,16 +5,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #define ERROR -1
 #define OK 0
 #define SERVER_PORT 5555
 
-char cmdLine[1024]; /* client command line */
+char messageOut[024]; /* message outbound from client */
+char messageIn[1024]; /* message inbound to client */
+
+int socketfd = 0;
+
+void receiveHelpMessage();
 
 int main(int argc, char **argv)
 {
-	int socketfd = 0;
 	int connfd = 0;
 	struct sockaddr_in server_address; /* server ip */
 	struct sockaddr_in client_address; /* client ip */
@@ -37,10 +42,11 @@ int main(int argc, char **argv)
 	{
 		printf("connected to server...\n");
 	}
+	receiveHelpMessage();
 	do
 	{
-		fgets(cmdLine, sizeof(cmdLine), stdin); /* get user input from keyboard */
-		cmdLine[strcspn(cmdLine, "\n")] = 0; /* strip trailing new line */
+		fgets(messageOut, sizeof(messageOut), stdin); /* get user input from keyboard */
+		messageOut[strcspn(messageOut, "\n")] = 0; /* strip trailing new line */
 /*		list of commands to implement:
 			see who else is online
 			set your username
@@ -48,6 +54,10 @@ int main(int argc, char **argv)
 			send someone a message
 */
 	}
-	while(strcmp(cmdLine, "!quit") != 0);
-
+	while(strcmp(messageOut, "!quit") != 0);
+}
+void receiveHelpMessage()
+{
+	read(socketfd, messageIn, sizeof(messageIn));
+	printf("%s", messageIn);
 }
