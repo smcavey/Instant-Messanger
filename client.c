@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 	}
 	else
 	{
-		printf("connected to server...");
+		printf("connected to server...\n");
 	}
 	do
 	{

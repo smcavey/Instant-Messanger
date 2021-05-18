@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <pthread.h>
 
 #define ERROR -1
 #define OK 0
@@ -22,8 +23,11 @@ typedef struct
 	int userID; /* user ID */
 } client_t;
 
+void *clientInterface(void *arg); /* handles communication with the client */
+
 int main(int argc, char **argv)
 {
+	pthread_t thread_id;
 	int userID = 0;
 	int listenfd = 0; /* listening descriptor */
 	int connfd = 0; /* connecton descriptor */
@@ -42,14 +46,13 @@ int main(int argc, char **argv)
 		perror("socket binding failed");
 		return ERROR;
 	}
-	printf("past socket bind");
 	/* listen for connections on socket */
 	if(listen(listenfd, 10) < 0)
 	{
 		perror("socket listening failed");
 		return ERROR; 
 	}
-	printf("past socket listen");
+	printf("Server online...\n");
 	/* accept clients */
 	while(1)
 	{
@@ -64,6 +67,14 @@ int main(int argc, char **argv)
 		client->userID = userID++;
 
 		numUsersConnected++;
+
+		printf("User %d connected\n", client->userID);
+		pthread_create(&thread_id, NULL, &clientInterface, (void*)client);
 	}
 	return 0;
+}
+
+void *clientInterface(void *arg)
+{
+
 }
