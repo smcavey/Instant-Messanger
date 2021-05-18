@@ -11,7 +11,7 @@
 #define OK 0
 #define SERVER_PORT 5555
 
-char messageOut[024]; /* message outbound from client */
+char messageOut[1024]; /* message outbound from client */
 char messageIn[1024]; /* message inbound to client */
 
 int socketfd = 0;
