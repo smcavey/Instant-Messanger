@@ -80,6 +80,12 @@ void *clientInterface(void *arg)
 {
 	client_t *client = (client_t*)arg;
 	clientHelpMenu(client->connfd);
+/*
+	while(1)
+	{
+		TODO: handle incoming messages and stuff from client and create helper methods to do such
+	}
+*/
 }
 void clientHelpMenu(int connfd)
 {

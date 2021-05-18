@@ -47,12 +47,7 @@ int main(int argc, char **argv)
 	{
 		fgets(messageOut, sizeof(messageOut), stdin); /* get user input from keyboard */
 		messageOut[strcspn(messageOut, "\n")] = 0; /* strip trailing new line */
-/*		list of commands to implement:
-			see who else is online
-			set your username
-			quit
-			send someone a message
-*/
+		/* stay in here and parse messageOut for commands that the server accepts and have a bunch of conditions to check those commands and execute them while valid and have helper methods for handling those...when a message is sent, call a receiveMessage method to get the reply...also think about how the user will get messages at any time from other clients */
 	}
 	while(strcmp(messageOut, "!quit") != 0);
 }
