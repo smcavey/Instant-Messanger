@@ -56,6 +56,9 @@ int main(int argc, char **argv)
 }
 void *receiveMessages(void *arg)
 {
-	read(socketfd, messageIn, sizeof(messageIn));
-	printf("%s", messageIn);
+	while(1)
+	{
+		read(socketfd, messageIn, sizeof(messageIn));
+		printf("%s", messageIn);
+	}
 }
