@@ -48,7 +48,8 @@ int main(int argc, char **argv)
 	while(1)
 	{
 		char messageOut[1024];
-		scanf("%s", messageOut);
+		fgets(messageOut, sizeof(messageOut), stdin); /* client chat block */
+		messageOut[strcspn(messageOut, "\n")] = 0; /* remove new line */
 		if((send(socketfd, messageOut, 1024, 0)) < 0)
 		{
 			perror("unable to send message");

@@ -87,7 +87,7 @@ void *clientInterface(void *arg)
 		char messageIn[1024];
 		int messageSize = recv(client->connfd, messageIn, 1024, 0);
 		messageIn[messageSize] = '\0';
-		printf("message from %d: %s\n", client->connfd, messageIn);
+		printf("%d: %s\n", client->userID, messageIn);
 		if(strcmp(messageIn, "!quit") == 0)
 		{
 			break;
