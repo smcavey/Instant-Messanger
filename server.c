@@ -86,20 +86,20 @@ void *clientInterface(void *arg)
 	{
 		char messageIn[1024];
 		int messageSize = recv(client->connfd, messageIn, 1024, 0);
-		for(int i = 0; i < messageSize; i++)
+		messageIn[messageSize] = '\0';
+		printf("message from %d: %s\n", client->connfd, messageIn);
+		if(strcmp(messageIn, "!quit") == 0)
 		{
-			printf("%c", messageIn[i]);
+			break;
 		}
-/*		read(client->connfd, messageIn, sizeof(messageIn));
-		printf("%s", messageIn);
-*/
 	}
+	close(client->connfd);
+	free(client);
+	pthread_detach(pthread_self());
+	return NULL;
 }
 void clientHelpMenu(int connfd)
 {
-	char *helpMessage = "!quit to quit\n!help for help\n";
+	char *helpMessage = "!quit to quit\n!help for help\n!name to change name";
 	send(connfd, helpMessage, 1024, 0);
-/*
-	write(connfd, helpMessage, strlen(helpMessage));
-*/
 }

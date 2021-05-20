@@ -48,14 +48,16 @@ int main(int argc, char **argv)
 	while(1)
 	{
 		char messageOut[1024];
-		fgets(messageOut, sizeof(messageOut), stdin); /* get user input from keyboard */
-		messageOut[strcspn(messageOut, "\n")] = 0; /* strip trailing new line */
+		scanf("%s", messageOut);
 		if((send(socketfd, messageOut, 1024, 0)) < 0)
 		{
 			perror("unable to send message");
 		}
-/*		write(socketfd, messageOut, strlen(messageOut)); */
-		printf("message out: %s", messageOut);
+		if(strcmp(messageOut, "!quit") == 0)
+		{
+			return 0;
+		}
+		printf("message out: %s\n", messageOut);
 	}
 }
 void *receiveMessages(void *socketfd)
