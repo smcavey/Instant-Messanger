@@ -15,6 +15,7 @@
 #define ERROR -1
 #define OK 0
 #define SERVER_PORT 5555 /* server port */
+#define MAX_NUM_CLIENTS 10
 
 int numUsersConnected = 0;
 
@@ -25,6 +26,8 @@ typedef struct
 	char *username; /* client username */
 	int userID; /* user ID */
 } client_t;
+
+client_t *clients[MAX_NUM_CLIENTS];
 
 void *clientInterface(void *arg); /* handles communication with the client */
 void clientHelpMenu(int connfd); /* provides client with helpful informaiton */
@@ -60,6 +63,7 @@ int main(int argc, char **argv)
 	/* accept clients */
 	while(1)
 	{
+		int i = 0;
 		socklen_t client_length = sizeof(client_address);
 		connfd = accept(listenfd, (struct sockaddr*)&client_address, &client_length);
 
@@ -72,8 +76,20 @@ int main(int argc, char **argv)
 
 		numUsersConnected++;
 
-		printf("User %d connected\n", client->userID);
+		printf("User %d connected\n", client[i].userID);
+/*		for(int i = 0; i < numClientsConnected; i++)
+		{
+			if(!clients[i])
+			{
+*/
+				clients[i] = client;
+/*
+				break;
+			}
+		}
+*/
 		pthread_create(&thread_id, NULL, clientInterface, (void*)client);
+		i++;
 	}
 	return 0;
 }
@@ -90,10 +106,40 @@ void *clientInterface(void *arg)
 		messageIn[messageSize] = '\0';
 		printf("%d: %s\n", client->userID, messageIn);
 		firstArg = strtok(messageIn, " ");
-		printf("%s\n", firstArg);
 		if(strcmp(firstArg, "!quit") == 0)
 		{
+			numUsersConnected--;
 			break;
+		}
+		else if(strcmp(firstArg, "!name") == 0)
+		{
+			char *name = strtok(NULL, " ");
+			client->username = name;
+		}
+		else if(strcmp(firstArg, "!help") == 0)
+		{
+			clientHelpMenu(client->connfd);
+		}
+		else if(strcmp(firstArg, "!msg") == 0)
+		{
+			char *recipient = strtok(NULL, " ");
+			char *message = strtok(NULL, "");
+			for(int i = 0; i < numUsersConnected; i++)
+			{
+				if(strcmp(recipient, client[i].username) == 0)
+				{
+					send(client[i].connfd, message, 1024, 0);
+					printf("message sent");
+				}
+			}
+		}
+		else if(strcmp(firstArg, "!who") == 0)
+		{
+			for(int i = 0; i < 5; i++)
+			{
+				char *user = client[i].username;
+				send(client->connfd, user, 1024, 0);
+			}
 		}
 	}
 	close(client->connfd);
@@ -103,6 +149,8 @@ void *clientInterface(void *arg)
 }
 void clientHelpMenu(int connfd)
 {
-	char *helpMessage = "!quit to quit\n!help for help\n!name to change name";
+	char *helpMessage = "Welcome! Begin by choosing a username. Type \"!name\"\
+	followed by your name to choose a name. Type \"!help\" for help. Type \
+	\"!quit\" to quit.";
 	send(connfd, helpMessage, 1024, 0);
 }
