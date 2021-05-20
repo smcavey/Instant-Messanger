@@ -1,4 +1,6 @@
 /* Spencer McAvey's Chat Client */
+/* To compile: gcc client.c -o client -pthread */
+/* To run: ./client */
 
 #include <stdio.h>
 #include <netdb.h>
@@ -13,17 +15,14 @@
 #define OK 0
 #define SERVER_PORT 5555
 
-char messageOut[1024]; /* message outbound from client */
-char messageIn[1024]; /* message inbound to client */
-
-int socketfd = 0;
-
-void *receiveMessages(void *arg);
+void *receiveMessages (void *socketfd);
 
 int main(int argc, char **argv)
 {
 	pthread_t thread_id; /* thread reference id */
+	char messageOut[1024];
 	int connfd = 0;
+	int socketfd = 0;
 	struct sockaddr_in server_address; /* server ip */
 	struct sockaddr_in client_address; /* client ip */
 	
@@ -45,20 +44,29 @@ int main(int argc, char **argv)
 	{
 		printf("connected to server...\n");
 	}
-	pthread_create(&thread_id, NULL, receiveMessages, (void*)&socketfd);
-	do
-	{
-		fgets(messageOut, sizeof(messageOut), stdin); /* get user input from keyboard */
-		messageOut[strcspn(messageOut, "\n")] = 0; /* strip trailing new line */
-		/* stay in here and parse messageOut for commands that the server accepts and have a bunch of conditions to check those commands and execute them while valid and have helper methods for handling those...when a message is sent, call a receiveMessage method to get the reply...also think about how the user will get messages at any time from other clients */
-	}
-	while(strcmp(messageOut, "!quit") != 0);
-}
-void *receiveMessages(void *arg)
-{
+	pthread_create(&thread_id, NULL, receiveMessages, (void *)&socketfd);
 	while(1)
 	{
-		read(socketfd, messageIn, sizeof(messageIn));
-		printf("%s", messageIn);
+		char messageOut[1024];
+		fgets(messageOut, sizeof(messageOut), stdin); /* get user input from keyboard */
+		messageOut[strcspn(messageOut, "\n")] = 0; /* strip trailing new line */
+		if((send(socketfd, messageOut, 1024, 0)) < 0)
+		{
+			perror("unable to send message");
+		}
+/*		write(socketfd, messageOut, strlen(messageOut)); */
+		printf("message out: %s", messageOut);
+	}
+}
+void *receiveMessages(void *socketfd)
+{
+	int socket = *((int *) socketfd);
+	while(1)
+	{
+		char message[1024];
+		int messageSize = recv(socket, message, 1024, 0);
+		message[messageSize] = '\0';
+		printf("%s\n", message);
+		
 	}
 }

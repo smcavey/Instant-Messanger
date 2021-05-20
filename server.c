@@ -1,4 +1,6 @@
 /* Spencer McAvey's Chat Server */
+/* To compile: gcc server.c -o server -pthread */
+/* To run: ./server */
 
 #include <stdio.h>
 #include <netdb.h>
@@ -71,7 +73,7 @@ int main(int argc, char **argv)
 		numUsersConnected++;
 
 		printf("User %d connected\n", client->userID);
-		pthread_create(&thread_id, NULL, &clientInterface, (void*)client);
+		pthread_create(&thread_id, NULL, clientInterface, (void*)client);
 	}
 	return 0;
 }
@@ -80,15 +82,24 @@ void *clientInterface(void *arg)
 {
 	client_t *client = (client_t*)arg;
 	clientHelpMenu(client->connfd);
-/*
 	while(1)
 	{
-		TODO: handle incoming messages and stuff from client and create helper methods to do such
-	}
+		char messageIn[1024];
+		int messageSize = recv(client->connfd, messageIn, 1024, 0);
+		for(int i = 0; i < messageSize; i++)
+		{
+			printf("%c", messageIn[i]);
+		}
+/*		read(client->connfd, messageIn, sizeof(messageIn));
+		printf("%s", messageIn);
 */
+	}
 }
 void clientHelpMenu(int connfd)
 {
 	char *helpMessage = "!quit to quit\n!help for help\n";
+	send(connfd, helpMessage, 1024, 0);
+/*
 	write(connfd, helpMessage, strlen(helpMessage));
+*/
 }
