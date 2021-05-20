@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 
 		numUsersConnected++;
 
-		printf("User %d connected\n", client[i].userID);
+		printf("User %d connected\n", client->userID);
 /*		for(int i = 0; i < numClientsConnected; i++)
 		{
 			if(!clients[i])
