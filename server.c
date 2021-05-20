@@ -61,9 +61,9 @@ int main(int argc, char **argv)
 	}
 	printf("Server online...\n");
 	/* accept clients */
+	int i = 0;
 	while(1)
 	{
-		int i = 0;
 		socklen_t client_length = sizeof(client_address);
 		connfd = accept(listenfd, (struct sockaddr*)&client_address, &client_length);
 
