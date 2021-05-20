@@ -47,8 +47,8 @@ int main(int argc, char **argv)
 	pthread_create(&thread_id, NULL, receiveMessages, (void *)&socketfd);
 	while(1)
 	{
-		char messageOut[1024];
-		fgets(messageOut, sizeof(messageOut), stdin); /* client chat block */
+		char messageOut[1024]; /* client command line */
+		fgets(messageOut, sizeof(messageOut), stdin);
 		messageOut[strcspn(messageOut, "\n")] = 0; /* remove new line */
 		if((send(socketfd, messageOut, 1024, 0)) < 0)
 		{
@@ -56,9 +56,9 @@ int main(int argc, char **argv)
 		}
 		if(strcmp(messageOut, "!quit") == 0)
 		{
-			return 0;
+			pthread_detach(pthread_self());
+			exit(0);
 		}
-		printf("message out: %s\n", messageOut);
 	}
 }
 void *receiveMessages(void *socketfd)

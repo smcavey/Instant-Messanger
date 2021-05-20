@@ -85,10 +85,13 @@ void *clientInterface(void *arg)
 	while(1)
 	{
 		char messageIn[1024];
+		char *firstArg;
 		int messageSize = recv(client->connfd, messageIn, 1024, 0);
 		messageIn[messageSize] = '\0';
 		printf("%d: %s\n", client->userID, messageIn);
-		if(strcmp(messageIn, "!quit") == 0)
+		firstArg = strtok(messageIn, " ");
+		printf("%s\n", firstArg);
+		if(strcmp(firstArg, "!quit") == 0)
 		{
 			break;
 		}
