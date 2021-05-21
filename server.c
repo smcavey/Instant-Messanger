@@ -99,9 +99,11 @@ void *clientInterface(void *arg)
 	while(1)
 	{
 		char messageIn[1024];
-		char *firstArg;
-		char *secondArg;
-		char *thirdArg;
+		char *firstArg = NULL;
+		char *secondArg = NULL;
+		char *thirdArg = NULL;
+		char *serverMessage = NULL;
+		char *user = NULL;
 		int messageSize = recv(client->connfd, messageIn, 1024, 0);
 		messageIn[messageSize] = '\0';
 		printf("%d: %s\n", client->userID, messageIn);
@@ -113,8 +115,10 @@ void *clientInterface(void *arg)
 		}
 		else if(strcmp(firstArg, "!name") == 0)
 		{
+			pthread_mutex_lock(&clients_list);
 			secondArg = strtok(NULL, " ");
 			client->username = secondArg;
+			pthread_mutex_unlock(&clients_list);
 		}
 		else if(strcmp(firstArg, "!help") == 0)
 		{
@@ -127,10 +131,11 @@ void *clientInterface(void *arg)
 			pthread_mutex_lock(&clients_list);
 			for(int i = 0; i < numUsersConnected; i++)
 			{
-				if(strcmp(secondArg, clients[i]->username) == 0)
+				user = clients[i]->username;
+				if(strcmp(secondArg, user) == 0)
 				{
 					send(clients[i]->connfd, thirdArg, 1024, 0);
-					printf("message sent");
+					printf("message sent\n");
 				}
 			}
 			pthread_mutex_unlock(&clients_list);
@@ -140,10 +145,14 @@ void *clientInterface(void *arg)
 			pthread_mutex_lock(&clients_list);
 			for(int i = 0; i < numUsersConnected; i++)
 			{
-				char *user = clients[i]->username;
-				send(client->connfd, user, 1024, 0);
+				send(client->connfd, clients[i]->username, 1024, 0);
 			}
 			pthread_mutex_unlock(&clients_list);
+		}
+		else
+		{
+			serverMessage = "unknown command";
+			send(client->connfd, serverMessage, 1024, 0);	
 		}
 	}
 	close(client->connfd);
@@ -153,8 +162,6 @@ void *clientInterface(void *arg)
 }
 void clientHelpMenu(int connfd)
 {
-	char *helpMessage = "Welcome! Begin by choosing a username. Type \"!name\"\
-	followed by your name to choose a name. Type \"!help\" for help. Type \
-	\"!quit\" to quit.";
+	char *helpMessage = "Welcome! Begin by choosing a username. Type \"!name\" to select a username. Type \"!help\" for to repeat this help menu. Try \"who\" to see a list of users online. Every user must have a unique username. To send a message type \"!msg\" followed by the user you would like to message, then followed by your message like this: \"!msg Bob Hey Bob!\". To quit type \"!quit\"";
 	send(connfd, helpMessage, 1024, 0);
 }
