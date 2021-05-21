@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 		printf("User %d connected\n", client->userID);
 		pthread_mutex_lock(&clients_list);
 		clients[i] = client;
-		printf("clients[i].userID: %d clients[i].connfd: %d\n", clients[i]->userID, clients[i]->connfd);
+		printf("clients[i]->userID: %d clients[i]->connfd: %d\n", clients[i]->userID, clients[i]->connfd);
 		pthread_mutex_unlock(&clients_list);
 		pthread_create(&thread_id, NULL, clientInterface, (void*)client);
 		printf("ID: %d CONNFD: %d\n", clients[i]->userID, clients[i]->connfd);
@@ -104,8 +104,8 @@ void *clientInterface(void *arg)
 		char *thirdArg = NULL;
 		char *serverMessage = NULL;
 		char *user = NULL;
-		int messageSize = recv(client->connfd, messageIn, 1024, 0);
-		messageIn[messageSize] = '\0';
+		recv(client->connfd, messageIn, 1024, 0);
+/*		messageIn[messageSize] = '\0';*/
 		printf("%d: %s\n", client->userID, messageIn);
 		firstArg = strtok(messageIn, " ");
 		if(strcmp(firstArg, "!quit") == 0)
@@ -139,15 +139,18 @@ void *clientInterface(void *arg)
 				}
 			}
 			pthread_mutex_unlock(&clients_list);
+			continue;
 		}
 		else if(strcmp(firstArg, "!who") == 0)
 		{
 			pthread_mutex_lock(&clients_list);
 			for(int i = 0; i < numUsersConnected; i++)
 			{
+				if(i != client->userID)
 				send(client->connfd, clients[i]->username, 1024, 0);
 			}
 			pthread_mutex_unlock(&clients_list);
+			continue;
 		}
 		else
 		{
