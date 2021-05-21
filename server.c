@@ -105,7 +105,6 @@ void *clientInterface(void *arg)
 		char *serverMessage = NULL;
 		char *user = NULL;
 		recv(client->connfd, messageIn, 1024, 0);
-/*		messageIn[messageSize] = '\0';*/
 		printf("%d: %s\n", client->userID, messageIn);
 		firstArg = strtok(messageIn, " ");
 		if(strcmp(firstArg, "!quit") == 0)
@@ -115,9 +114,11 @@ void *clientInterface(void *arg)
 		}
 		else if(strcmp(firstArg, "!name") == 0)
 		{
+			char *tempName = NULL;
 			pthread_mutex_lock(&clients_list);
 			secondArg = strtok(NULL, " ");
-			client->username = secondArg;
+			tempName = secondArg;
+			client->username = tempName;
 			pthread_mutex_unlock(&clients_list);
 		}
 		else if(strcmp(firstArg, "!help") == 0)
