@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -31,6 +33,8 @@ client_t *clients[MAX_NUM_CLIENTS];
 
 void *clientInterface(void *arg); /* handles communication with the client */
 void clientHelpMenu(int connfd); /* provides client with helpful informaiton */
+
+pthread_mutex_t clients_list = PTHREAD_MUTEX_INITIALIZER;
 
 int main(int argc, char **argv)
 {
@@ -71,25 +75,19 @@ int main(int argc, char **argv)
 		client_t *client = (client_t *)malloc(sizeof(client_t));
 		client->address = client_address;
 		client->connfd = connfd;
-		client->username = NULL;
-		client->userID = userID++;
-
-		numUsersConnected++;
+		client->username = "temp";
+		client->userID = userID;
 
 		printf("User %d connected\n", client->userID);
-/*		for(int i = 0; i < numClientsConnected; i++)
-		{
-			if(!clients[i])
-			{
-*/
-				clients[i] = client;
-/*
-				break;
-			}
-		}
-*/
+		pthread_mutex_lock(&clients_list);
+		clients[i] = client;
+		printf("clients[i].userID: %d clients[i].connfd: %d\n", clients[i]->userID, clients[i]->connfd);
+		pthread_mutex_unlock(&clients_list);
 		pthread_create(&thread_id, NULL, clientInterface, (void*)client);
+		printf("ID: %d CONNFD: %d\n", clients[i]->userID, clients[i]->connfd);
 		i++;
+		userID++;
+		numUsersConnected++;
 	}
 	return 0;
 }
@@ -102,6 +100,8 @@ void *clientInterface(void *arg)
 	{
 		char messageIn[1024];
 		char *firstArg;
+		char *secondArg;
+		char *thirdArg;
 		int messageSize = recv(client->connfd, messageIn, 1024, 0);
 		messageIn[messageSize] = '\0';
 		printf("%d: %s\n", client->userID, messageIn);
@@ -113,8 +113,8 @@ void *clientInterface(void *arg)
 		}
 		else if(strcmp(firstArg, "!name") == 0)
 		{
-			char *name = strtok(NULL, " ");
-			client->username = name;
+			secondArg = strtok(NULL, " ");
+			client->username = secondArg;
 		}
 		else if(strcmp(firstArg, "!help") == 0)
 		{
@@ -122,24 +122,28 @@ void *clientInterface(void *arg)
 		}
 		else if(strcmp(firstArg, "!msg") == 0)
 		{
-			char *recipient = strtok(NULL, " ");
-			char *message = strtok(NULL, "");
+			secondArg = strtok(NULL, " ");
+			thirdArg = strtok(NULL, "");
+			pthread_mutex_lock(&clients_list);
 			for(int i = 0; i < numUsersConnected; i++)
 			{
-				if(strcmp(recipient, client[i].username) == 0)
+				if(strcmp(secondArg, clients[i]->username) == 0)
 				{
-					send(client[i].connfd, message, 1024, 0);
+					send(clients[i]->connfd, thirdArg, 1024, 0);
 					printf("message sent");
 				}
 			}
+			pthread_mutex_unlock(&clients_list);
 		}
 		else if(strcmp(firstArg, "!who") == 0)
 		{
-			for(int i = 0; i < 5; i++)
+			pthread_mutex_lock(&clients_list);
+			for(int i = 0; i < numUsersConnected; i++)
 			{
-				char *user = client[i].username;
+				char *user = clients[i]->username;
 				send(client->connfd, user, 1024, 0);
 			}
+			pthread_mutex_unlock(&clients_list);
 		}
 	}
 	close(client->connfd);
