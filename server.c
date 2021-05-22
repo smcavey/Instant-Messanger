@@ -33,6 +33,7 @@ client_t *clients[MAX_NUM_CLIENTS];
 
 void *clientInterface(void *arg); /* handles communication with the client */
 void clientHelpMenu(int connfd); /* provides client with helpful informaiton */
+void setUsername(int connfd, int userID); /* gives user chat access once they have a unique username */
 
 pthread_mutex_t clients_list = PTHREAD_MUTEX_INITIALIZER;
 
@@ -96,30 +97,33 @@ void *clientInterface(void *arg)
 {
 	client_t *client = (client_t*)arg;
 	clientHelpMenu(client->connfd);
+	setUsername(client->connfd, client->userID);
 	while(1)
 	{
 		char messageIn[1024];
+		int size;
 		char *firstArg = NULL;
 		char *secondArg = NULL;
 		char *thirdArg = NULL;
 		char *serverMessage = NULL;
 		char *user = NULL;
-		recv(client->connfd, messageIn, 1024, 0);
+		int i = 0;
+		size = recv(client->connfd, messageIn, 1024, 0);
+		messageIn[size] = '\0';
+		while(messageIn[i] != '\0') /* strip newline */
+		{
+			if(messageIn[i] == '\n')
+			{
+				messageIn[i] = '\0';
+			}
+			i++;
+		}
 		printf("%d: %s\n", client->userID, messageIn);
 		firstArg = strtok(messageIn, " ");
 		if(strcmp(firstArg, "!quit") == 0)
 		{
 			numUsersConnected--;
 			break;
-		}
-		else if(strcmp(firstArg, "!name") == 0)
-		{
-			char *tempName = NULL;
-			pthread_mutex_lock(&clients_list);
-			secondArg = strtok(NULL, " ");
-			tempName = secondArg;
-			client->username = tempName;
-			pthread_mutex_unlock(&clients_list);
 		}
 		else if(strcmp(firstArg, "!help") == 0)
 		{
@@ -168,4 +172,25 @@ void clientHelpMenu(int connfd)
 {
 	char *helpMessage = "Welcome! Begin by choosing a username. Type \"!name\" to select a username. Type \"!help\" for to repeat this help menu. Try \"who\" to see a list of users online. Every user must have a unique username. To send a message type \"!msg\" followed by the user you would like to message, then followed by your message like this: \"!msg Bob Hey Bob!\". To quit type \"!quit\"";
 	send(connfd, helpMessage, 1024, 0);
+}
+void setUsername(int connfd, int userID)
+{
+	char *messageOut = "Input a unique username before you can begin chatting";
+	char *user;
+	send(connfd, messageOut, 1024, 0);	
+	char messageIn[1024];
+	recv(connfd, messageIn, 1024, 0);
+	user = messageIn;
+	printf("messageIn: %s user: %s\n", messageIn, user);
+	for(int i = 0; i < numUsersConnected; i++)
+	{
+		if(strcmp(clients[i]->username, user) == 0)
+		{
+			setUsername(connfd, userID);
+		}
+	}
+	pthread_mutex_lock(&clients_list);
+	printf("%s\n", clients[0]->username);
+	clients[userID]->username = user;
+	pthread_mutex_unlock(&clients_list);
 }
