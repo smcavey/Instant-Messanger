@@ -97,7 +97,9 @@ void *clientInterface(void *arg)
 {
 	client_t *client = (client_t*)arg;
 	clientHelpMenu(client->connfd);
+/*	pthread_mutex_lock(&clients_list);*/
 	setUsername(client->connfd, client->userID);
+/*	pthread_mutex_unlock(&clients_list);*/
 	while(1)
 	{
 		char messageIn[1024];
@@ -176,21 +178,26 @@ void clientHelpMenu(int connfd)
 void setUsername(int connfd, int userID)
 {
 	char *messageOut = "Input a unique username before you can begin chatting";
-	char *user;
 	send(connfd, messageOut, 1024, 0);	
-	char messageIn[1024];
+	char messageIn[1024] = "";
 	recv(connfd, messageIn, 1024, 0);
-	user = messageIn;
-	printf("messageIn: %s user: %s\n", messageIn, user);
-	for(int i = 0; i < numUsersConnected; i++)
+/*	user = messageIn;*/
+/*	strcpy(user, messageIn);*/
+	printf("messageIn: %s\n", messageIn);
+	for(int i = 0; i < numUsersConnected-1; i++)
 	{
-		if(strcmp(clients[i]->username, user) == 0)
+		if(strcmp(clients[i]->username, messageIn) == 0)
 		{
-			setUsername(connfd, userID);
+/*			setUsername(connfd, userID);*/
+			send(connfd, messageOut, 1024, 0);	
+			i = 0;
+			recv(connfd, messageIn, 1024, 0);
+		}
+		else
+		{
+			continue;
 		}
 	}
-	pthread_mutex_lock(&clients_list);
-	printf("%s\n", clients[0]->username);
-	clients[userID]->username = user;
-	pthread_mutex_unlock(&clients_list);
+	printf("messageIn: %s userID: %d\n", messageIn, userID);
+	clients[userID]->username = messageIn;
 }
