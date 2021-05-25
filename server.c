@@ -25,7 +25,7 @@ typedef struct
 {
 	struct sockaddr_in address; /* client address */
 	int connfd; /* connection file descriptor */
-	char *username; /* client username */
+	char username[32]; /* client username */
 	int userID; /* user ID */
 } client_t;
 
@@ -34,6 +34,7 @@ client_t *clients[MAX_NUM_CLIENTS];
 void *clientInterface(void *arg); /* handles communication with the client */
 void clientHelpMenu(int connfd); /* provides client with helpful informaiton */
 void setUsername(int connfd, int userID); /* gives user chat access once they have a unique username */
+void userJoinedMessage(int userID); /* sends message to everyone besides client that a new user joined */
 
 pthread_mutex_t clients_list = PTHREAD_MUTEX_INITIALIZER;
 
@@ -76,7 +77,8 @@ int main(int argc, char **argv)
 		client_t *client = (client_t *)malloc(sizeof(client_t));
 		client->address = client_address;
 		client->connfd = connfd;
-		client->username = "temp";
+		strcpy(client->username, "temp");
+/*		client->username = "temp";*/
 		client->userID = userID;
 
 		printf("User %d connected\n", client->userID);
@@ -84,11 +86,11 @@ int main(int argc, char **argv)
 		clients[i] = client;
 		printf("clients[i]->userID: %d clients[i]->connfd: %d\n", clients[i]->userID, clients[i]->connfd);
 		pthread_mutex_unlock(&clients_list);
-		pthread_create(&thread_id, NULL, clientInterface, (void*)client);
 		printf("ID: %d CONNFD: %d\n", clients[i]->userID, clients[i]->connfd);
 		i++;
 		userID++;
 		numUsersConnected++;
+		pthread_create(&thread_id, NULL, clientInterface, (void*)client);
 	}
 	return 0;
 }
@@ -97,9 +99,8 @@ void *clientInterface(void *arg)
 {
 	client_t *client = (client_t*)arg;
 	clientHelpMenu(client->connfd);
-/*	pthread_mutex_lock(&clients_list);*/
 	setUsername(client->connfd, client->userID);
-/*	pthread_mutex_unlock(&clients_list);*/
+	userJoinedMessage(client->userID);
 	while(1)
 	{
 		char messageIn[1024];
@@ -177,19 +178,17 @@ void clientHelpMenu(int connfd)
 }
 void setUsername(int connfd, int userID)
 {
+	pthread_mutex_lock(&clients_list);
 	char *messageOut = "Input a unique username before you can begin chatting";
 	send(connfd, messageOut, 1024, 0);	
 	char messageIn[1024] = "";
 	recv(connfd, messageIn, 1024, 0);
-/*	user = messageIn;*/
-/*	strcpy(user, messageIn);*/
 	printf("messageIn: %s\n", messageIn);
 	for(int i = 0; i < numUsersConnected-1; i++)
 	{
 		if(strcmp(clients[i]->username, messageIn) == 0)
 		{
-/*			setUsername(connfd, userID);*/
-			send(connfd, messageOut, 1024, 0);	
+			send(connfd, messageOut, 1024, 0);
 			i = 0;
 			recv(connfd, messageIn, 1024, 0);
 		}
@@ -199,5 +198,35 @@ void setUsername(int connfd, int userID)
 		}
 	}
 	printf("messageIn: %s userID: %d\n", messageIn, userID);
-	clients[userID]->username = messageIn;
+	strcpy(clients[userID]->username, messageIn);
+/*	clients[userID]->username = messageIn;*/
+	pthread_mutex_unlock(&clients_list);
+}
+void userJoinedMessage(int userID)
+{
+	pthread_mutex_lock(&clients_list);
+	printf("numUsersConnected: %d\n", numUsersConnected);
+/*	if(numUsersConnected <= 1 )
+	{
+		return;
+	}
+*/
+	printf("Im in userJoinedMessage\n");
+	char messageOut[1024];
+	strcpy(messageOut, clients[userID]->username);
+	strcat(messageOut, " has joined!");
+	for(int i = 0; i < numUsersConnected; i++)
+	{
+/*		if(clients[i]->userID != userID)
+		{
+*/
+			send(clients[i]->connfd, messageOut, 1024, 0);
+/*		}
+		else
+		{
+			continue;
+		}
+*/
+	}
+	pthread_mutex_unlock(&clients_list);
 }
