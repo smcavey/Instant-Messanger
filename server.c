@@ -78,7 +78,6 @@ int main(int argc, char **argv)
 		client->address = client_address;
 		client->connfd = connfd;
 		strcpy(client->username, "temp");
-/*		client->username = "temp";*/
 		client->userID = userID;
 
 		printf("User %d connected\n", client->userID);
@@ -199,34 +198,19 @@ void setUsername(int connfd, int userID)
 	}
 	printf("messageIn: %s userID: %d\n", messageIn, userID);
 	strcpy(clients[userID]->username, messageIn);
-/*	clients[userID]->username = messageIn;*/
 	pthread_mutex_unlock(&clients_list);
 }
 void userJoinedMessage(int userID)
 {
 	pthread_mutex_lock(&clients_list);
 	printf("numUsersConnected: %d\n", numUsersConnected);
-/*	if(numUsersConnected <= 1 )
-	{
-		return;
-	}
-*/
 	printf("Im in userJoinedMessage\n");
 	char messageOut[1024];
 	strcpy(messageOut, clients[userID]->username);
 	strcat(messageOut, " has joined!");
 	for(int i = 0; i < numUsersConnected; i++)
 	{
-/*		if(clients[i]->userID != userID)
-		{
-*/
-			send(clients[i]->connfd, messageOut, 1024, 0);
-/*		}
-		else
-		{
-			continue;
-		}
-*/
+		send(clients[i]->connfd, messageOut, 1024, 0);
 	}
 	pthread_mutex_unlock(&clients_list);
 }
