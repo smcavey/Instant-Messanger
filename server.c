@@ -34,7 +34,8 @@ client_t *clients[MAX_NUM_CLIENTS];
 void *clientInterface(void *arg); /* handles communication with the client */
 void clientHelpMenu(int connfd); /* provides client with helpful informaiton */
 void setUsername(int connfd, int userID); /* gives user chat access once they have a unique username */
-void userJoinedMessage(int userID); /* sends message to everyone besides client that a new user joined */
+void userJoinedMessage(int userID); /* sends message to everyone that a client joined */
+void userLeftMessage(int userID); /* sends message to everyone that a client left */
 
 pthread_mutex_t clients_list = PTHREAD_MUTEX_INITIALIZER;
 
@@ -124,6 +125,7 @@ void *clientInterface(void *arg)
 		firstArg = strtok(messageIn, " ");
 		if(strcmp(firstArg, "!quit") == 0)
 		{
+			userLeftMessage(client->userID);
 			numUsersConnected--;
 			break;
 		}
@@ -182,7 +184,6 @@ void setUsername(int connfd, int userID)
 	send(connfd, messageOut, 1024, 0);	
 	char messageIn[1024] = "";
 	recv(connfd, messageIn, 1024, 0);
-	printf("messageIn: %s\n", messageIn);
 	for(int i = 0; i < numUsersConnected-1; i++)
 	{
 		if(strcmp(clients[i]->username, messageIn) == 0)
@@ -203,11 +204,21 @@ void setUsername(int connfd, int userID)
 void userJoinedMessage(int userID)
 {
 	pthread_mutex_lock(&clients_list);
-	printf("numUsersConnected: %d\n", numUsersConnected);
-	printf("Im in userJoinedMessage\n");
 	char messageOut[1024];
 	strcpy(messageOut, clients[userID]->username);
 	strcat(messageOut, " has joined!");
+	for(int i = 0; i < numUsersConnected; i++)
+	{
+		send(clients[i]->connfd, messageOut, 1024, 0);
+	}
+	pthread_mutex_unlock(&clients_list);
+}
+void userLeftMessage(int userID)
+{
+	pthread_mutex_lock(&clients_list);
+	char messageOut[1024];
+	strcpy(messageOut, clients[userID]->username);
+	strcat(messageOut, " has left.");
 	for(int i = 0; i < numUsersConnected; i++)
 	{
 		send(clients[i]->connfd, messageOut, 1024, 0);
