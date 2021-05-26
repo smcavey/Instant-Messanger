@@ -20,8 +20,7 @@ void *receiveMessages (void *socketfd);
 int main(int argc, char **argv)
 {
 	pthread_t thread_id; /* thread reference id */
-	char messageOut[1024];
-	int connfd = 0;
+	char messageOut[1024]; /* outbound message from client */
 	int socketfd = 0;
 	struct sockaddr_in server_address; /* server ip */
 	struct sockaddr_in client_address; /* client ip */
