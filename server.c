@@ -181,21 +181,24 @@ void setUsername(int connfd, int userID)
 {
 	pthread_mutex_lock(&clients_list);
 	char *messageOut = "Input a unique username before you can begin chatting";
+	int i = 0;
 	send(connfd, messageOut, 1024, 0);	
 	char messageIn[1024] = "";
 	recv(connfd, messageIn, 1024, 0);
-	for(int i = 0; i < numUsersConnected-1; i++)
+	while(1)
 	{
-		if(strcmp(clients[i]->username, messageIn) == 0)
+		if(strcmp(clients[i]->username, messageIn) ==0)
 		{
 			send(connfd, messageOut, 1024, 0);
-			i = 0;
 			recv(connfd, messageIn, 1024, 0);
-		}
-		else
-		{
+			i = 0;
 			continue;
 		}
+		if(i == numUsersConnected -1)
+		{
+			break;
+		}
+		i++;
 	}
 	printf("messageIn: %s userID: %d\n", messageIn, userID);
 	strcpy(clients[userID]->username, messageIn);
