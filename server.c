@@ -57,13 +57,13 @@ int main(int argc, char **argv)
 	/* bind to associate socket with local ip and port */
 	if(bind(listenfd, (struct sockaddr*)&server_address, sizeof(server_address)) <0)
 	{
-		perror("socket binding failed");
+		perror("socket bind failure");
 		return ERROR;
 	}
 	/* listen for connections on socket */
 	if(listen(listenfd, 10) < 0)
 	{
-		perror("socket listening failed");
+		perror("socket listen failure");
 		return ERROR; 
 	}
 	printf("Server online...\n");
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 		connfd = accept(listenfd, (struct sockaddr*)&client_address, &client_length);
 
 		/* add client */
-		client_t *client = (client_t *)malloc(sizeof(client_t));
+		client_t *client = (client_t *)malloc(sizeof(client_t)); /* add client to list of client structs and malloc */
 		client->address = client_address;
 		client->connfd = connfd;
 		strcpy(client->username, "temp");
@@ -84,13 +84,13 @@ int main(int argc, char **argv)
 		printf("User %d connected\n", client->userID);
 		pthread_mutex_lock(&clients_list);
 		clients[i] = client;
-		printf("clients[i]->userID: %d clients[i]->connfd: %d\n", clients[i]->userID, clients[i]->connfd);
+		printf("clients[i]->userID: %d clients[i]->connfd: %d\n", clients[i]->userID, clients[i]->connfd); /* print client info to server */
 		pthread_mutex_unlock(&clients_list);
-		printf("ID: %d CONNFD: %d\n", clients[i]->userID, clients[i]->connfd);
+		printf("ID: %d CONNFD: %d\n", clients[i]->userID, clients[i]->connfd); /* print more client info to server */
 		i++;
 		userID++;
 		numUsersConnected++;
-		pthread_create(&thread_id, NULL, clientInterface, (void*)client);
+		pthread_create(&thread_id, NULL, clientInterface, (void*)client); /* create a thread to receive messages and commands from each unique client */
 	}
 	return 0;
 }
@@ -98,20 +98,20 @@ int main(int argc, char **argv)
 void *clientInterface(void *arg)
 {
 	client_t *client = (client_t*)arg;
-	clientHelpMenu(client->connfd);
-	setUsername(client->connfd, client->userID);
-	userJoinedMessage(client->userID);
+	clientHelpMenu(client->connfd); /* send client helpful message about utilizing the SMcAvey Instant Messenger */
+	setUsername(client->connfd, client->userID); /* get a unique username from the client */
+	userJoinedMessage(client->userID); /* send a message to every user the a new user has joined */
 	while(1)
 	{
-		char messageIn[1024];
+		char messageIn[1024]; /* message inbound from client containing commands and arguments dependent upon command type */
 		int size;
-		char *firstArg = NULL;
-		char *secondArg = NULL;
-		char *thirdArg = NULL;
-		char *serverMessage = NULL;
+		char *firstArg = NULL; /* the command part of the client's command line being sent to server */
+		char *secondArg = NULL; /* argument following first argument if applicable */
+		char *thirdArg = NULL; /* argument following second argument if applicable */
+		char *errorMessage = NULL; /* error message to be sent to client in the event of certain caught errors */
 		char *user = NULL;
 		int i = 0;
-		size = recv(client->connfd, messageIn, 1024, 0);
+		size = recv(client->connfd, messageIn, 1024, 0); /* receive message from client and strip newline and append null terminator */
 		messageIn[size] = '\0';
 		while(messageIn[i] != '\0') /* strip newline */
 		{
@@ -121,7 +121,7 @@ void *clientInterface(void *arg)
 			}
 			i++;
 		}
-		printf("%d: %s\n", client->userID, messageIn);
+		printf("%d: %s\n", client->userID, messageIn); /* server printout to display client activity */
 		firstArg = strtok(messageIn, " ");
 		if(strcmp(firstArg, "!quit") == 0)
 		{
@@ -135,11 +135,11 @@ void *clientInterface(void *arg)
 		}
 		else if(strcmp(firstArg, "!msg") == 0)
 		{
-			char messageOut[1024];
-			strcat(messageOut, client->username);
+			char messageOut[1024]; /* message to be sent to user */
+			strcat(messageOut, client->username); /* formatting message in form of: sender's name: message here */
 			strcat(messageOut, ": ");
-			secondArg = strtok(NULL, " ");
-			thirdArg = strtok(NULL, "");
+			secondArg = strtok(NULL, " "); /* recipient */
+			thirdArg = strtok(NULL, ""); /* message */
 			strcat(messageOut, thirdArg);
 			pthread_mutex_lock(&clients_list);
 			for(int i = 0; i < numUsersConnected; i++)
@@ -147,8 +147,8 @@ void *clientInterface(void *arg)
 				user = clients[i]->username;
 				if(strcmp(secondArg, user) == 0)
 				{
-					send(clients[i]->connfd, messageOut, 1024, 0);
-					printf("message sent\n");
+					send(clients[i]->connfd, messageOut, 1024, 0); /* send message from sender to recipient */
+					printf("message sent\n"); /* server printout to confirm successful message traffic */
 				}
 			}
 			pthread_mutex_unlock(&clients_list);
@@ -167,8 +167,8 @@ void *clientInterface(void *arg)
 		}
 		else
 		{
-			serverMessage = "unknown command";
-			send(client->connfd, serverMessage, 1024, 0);	
+			errorMessage = "unknown command";
+			send(client->connfd, errorMessage, 1024, 0);	
 		}
 	}
 	close(client->connfd);
@@ -178,43 +178,43 @@ void *clientInterface(void *arg)
 }
 void clientHelpMenu(int connfd)
 {
-	char *helpMessage = "Welcome! Begin by choosing a username. Type \"!name\" to select a username. Type \"!help\" for to repeat this help menu. Try \"who\" to see a list of users online. Every user must have a unique username. To send a message type \"!msg\" followed by the user you would like to message, then followed by your message like this: \"!msg Bob Hey Bob!\". To quit type \"!quit\"";
+	char *helpMessage = "Welcome to the SMcAvey Instant Messenger! Type \"!help\" for to repeat this help menu. Try \"who\" to see a list of users online. Every user must have a unique username. To send a message type \"!msg\" followed by the user you would like to message, then followed by your message like this: \"!msg Bob Hey Bob!\". To quit type \"!quit\". Before you can begin, you will have to establish your username. That will happen now.";
 	send(connfd, helpMessage, 1024, 0);
 }
 void setUsername(int connfd, int userID)
 {
 	pthread_mutex_lock(&clients_list);
-	char *messageOut = "Input a unique username before you can begin chatting";
+	char *messageOut = "Input a unique username before you can begin chatting"; /* message to be sent to user */
 	int i = 0;
 	send(connfd, messageOut, 1024, 0);	
-	char messageIn[1024] = "";
+	char messageIn[1024] = ""; /* username to be received from user */
 	recv(connfd, messageIn, 1024, 0);
 	while(1)
 	{
-		if(strcmp(clients[i]->username, messageIn) ==0)
+		if(strcmp(clients[i]->username, messageIn) ==0) /* check username against all other usernames for uniqueness */
 		{
-			send(connfd, messageOut, 1024, 0);
-			recv(connfd, messageIn, 1024, 0);
-			i = 0;
+			send(connfd, messageOut, 1024, 0); /* prompt the user again to enter a unique username */
+			recv(connfd, messageIn, 1024, 0); /* receive user's username */
+			i = 0; /* reset the loop counter so we can check all users again for uniqueness */
 			continue;
 		}
-		if(i == numUsersConnected -1)
+		if(i == numUsersConnected -1) /* if we have checked against every other user and the name is therefore unique, break */
 		{
 			break;
 		}
 		i++;
 	}
 	printf("messageIn: %s userID: %d\n", messageIn, userID);
-	strcpy(clients[userID]->username, messageIn);
+	strcpy(clients[userID]->username, messageIn); /* assign the unique username to this user */
 	pthread_mutex_unlock(&clients_list);
 }
 void userJoinedMessage(int userID)
 {
 	pthread_mutex_lock(&clients_list);
-	char messageOut[1024];
+	char messageOut[1024]; /* message to be sent to user */
 	strcpy(messageOut, clients[userID]->username);
 	strcat(messageOut, " has joined!");
-	for(int i = 0; i < numUsersConnected; i++)
+	for(int i = 0; i < numUsersConnected; i++) /* send a message to all users that a new user has joined */
 	{
 		send(clients[i]->connfd, messageOut, 1024, 0);
 	}
@@ -223,12 +223,12 @@ void userJoinedMessage(int userID)
 void userLeftMessage(int userID)
 {
 	pthread_mutex_lock(&clients_list);
-	char messageOut[1024];
+	char messageOut[1024]; /* message to be sent to user */
 	strcpy(messageOut, clients[userID]->username);
 	strcat(messageOut, " has left.");
 	for(int i = 0; i < numUsersConnected; i++)
 	{
-		send(clients[i]->connfd, messageOut, 1024, 0);
+		send(clients[i]->connfd, messageOut, 1024, 0); /* send a message to all users that a user has left */
 	}
 	pthread_mutex_unlock(&clients_list);
 }
