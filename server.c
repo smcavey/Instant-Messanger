@@ -135,15 +135,19 @@ void *clientInterface(void *arg)
 		}
 		else if(strcmp(firstArg, "!msg") == 0)
 		{
+			char messageOut[1024];
+			strcat(messageOut, client->username);
+			strcat(messageOut, ": ");
 			secondArg = strtok(NULL, " ");
 			thirdArg = strtok(NULL, "");
+			strcat(messageOut, thirdArg);
 			pthread_mutex_lock(&clients_list);
 			for(int i = 0; i < numUsersConnected; i++)
 			{
 				user = clients[i]->username;
 				if(strcmp(secondArg, user) == 0)
 				{
-					send(clients[i]->connfd, thirdArg, 1024, 0);
+					send(clients[i]->connfd, messageOut, 1024, 0);
 					printf("message sent\n");
 				}
 			}
