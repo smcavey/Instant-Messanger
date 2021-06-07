@@ -181,6 +181,12 @@ void *clientInterface(void *arg)
 			strcat(messageOut, secondArg);
 			for(int i = 0; i < numUsersConnected; i++)
 			{
+				if(numUsersConnected == 1)
+				{
+					char errorMessage[1024] = "No one else connected...";
+					send(client->connfd, errorMessage, 1024, 0);
+					break;
+				}
 				if(clients[i]->connfd == client->connfd) /* don't send message to client's self */
 				{
 					continue;
