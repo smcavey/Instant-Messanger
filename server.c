@@ -1,6 +1,7 @@
 /* Spencer McAvey's Chat Server */
 /* To compile: gcc server.c -o server -pthread */
 /* To run: ./server */
+/* Server relays all messages from clients to one another */
 
 #include <stdio.h>
 #include <netdb.h>
@@ -165,15 +166,34 @@ void *clientInterface(void *arg)
 			pthread_mutex_unlock(&clients_list);
 			continue;
 		}
+		else if(strcmp(firstArg, "!msgall") == 0)
+		{
+			char messageOut[1024]; /* message to be sent to all users */
+			secondArg = strtok(NULL, " "); /* message */
+			strcat(messageOut, client->username); /* message formatting */
+			strcat(messageOut, ": ");
+			strcat(messageOut, secondArg);
+			for(int i = 0; i < numUsersConnected; i++)
+			{
+				if(clients[i]->connfd == client->connfd) /* don't send message to client's self */
+				{
+					continue;
+				}
+				else
+				{
+					send(clients[i]->connfd, messageOut, 1024, 0); /* send message to all but sender */
+				}
+			}
+		}
 		else
 		{
 			errorMessage = "unknown command";
 			send(client->connfd, errorMessage, 1024, 0);	
 		}
 	}
-	close(client->connfd);
-	free(client);
-	pthread_detach(pthread_self());
+	close(client->connfd); /* close connection */
+	free(client); /* free memory */
+	pthread_detach(pthread_self()); /* kill thread */
 	return NULL;
 }
 void clientHelpMenu(int connfd)
