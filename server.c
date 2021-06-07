@@ -136,7 +136,7 @@ void *clientInterface(void *arg)
 		}
 		else if(strcmp(firstArg, "!msg") == 0)
 		{
-			char messageOut[1024]; /* message to be sent to user */
+			char messageOut[1024] = ""; /* message to be sent to user */
 			strcat(messageOut, client->username); /* formatting message in form of: sender's name: message here */
 			strcat(messageOut, ": ");
 			secondArg = strtok(NULL, " "); /* recipient */
@@ -150,6 +150,12 @@ void *clientInterface(void *arg)
 				{
 					send(clients[i]->connfd, messageOut, 1024, 0); /* send message from sender to recipient */
 					printf("message sent\n"); /* server printout to confirm successful message traffic */
+					break;
+				}
+				if(i == numUsersConnected - 1)
+				{
+					char errorMessage[1024] = "Invalid user...";
+					send(client->connfd, errorMessage, 1024, 0);
 				}
 			}
 			pthread_mutex_unlock(&clients_list);
@@ -168,8 +174,8 @@ void *clientInterface(void *arg)
 		}
 		else if(strcmp(firstArg, "!msgall") == 0)
 		{
-			char messageOut[1024]; /* message to be sent to all users */
-			secondArg = strtok(NULL, " "); /* message */
+			char messageOut[1024] = ""; /* message to be sent to all users */
+			secondArg = strtok(NULL, ""); /* message */
 			strcat(messageOut, client->username); /* message formatting */
 			strcat(messageOut, ": ");
 			strcat(messageOut, secondArg);
